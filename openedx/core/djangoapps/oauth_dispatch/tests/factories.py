@@ -6,20 +6,29 @@ import factory
 import pytz
 from factory.django import DjangoModelFactory
 from factory.fuzzy import FuzzyText
-from oauth2_provider.models import AccessToken, Application, RefreshToken
+from oauth2_provider.models import AbstractApplication, AccessToken, RefreshToken, get_application_model
 
+from openedx.core.djangoapps.oauth_dispatch.models import Application
 from student.tests.factories import UserFactory
 
 
-class ApplicationFactory(DjangoModelFactory):
+# TODO Phase 2: Remove this, and use ApplicationFactory
+class CustomApplicationFactory(DjangoModelFactory):
     class Meta(object):
         model = Application
 
     user = factory.SubFactory(UserFactory)
-    client_id = factory.Sequence(u'client_{0}'.format)
-    client_secret = 'some_secret'
-    client_type = 'confidential'
-    authorization_grant_type = 'Client credentials'
+    client_type = Application.CLIENT_CONFIDENTIAL
+    authorization_grant_type = Application.GRANT_AUTHORIZATION_CODE
+
+
+class ApplicationFactory(DjangoModelFactory):
+    class Meta(object):
+        model = get_application_model()
+
+    user = factory.SubFactory(UserFactory)
+    client_type = AbstractApplication.CLIENT_CONFIDENTIAL
+    authorization_grant_type = AbstractApplication.GRANT_AUTHORIZATION_CODE
 
 
 class AccessTokenFactory(DjangoModelFactory):

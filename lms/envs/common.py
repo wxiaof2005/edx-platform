@@ -520,9 +520,10 @@ OAUTH2_PROVIDER = {
         'profile': 'Read your user profile',
     },
 }
-# This is required for the migrations in oauth_dispatch.models
-# otherwise it fails saying this attribute is not present in Settings
+
+# TODO (Phase 2): Swap for the new model
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
+# OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth_dispatch.Application'
 
 ################################## TEMPLATE CONFIGURATION #####################################
 # Mako templating
@@ -2064,7 +2065,7 @@ INSTALLED_APPS = [
 
     # django-oauth-toolkit
     'oauth2_provider',
-    'openedx.core.djangoapps.oauth_dispatch.apps.OAuthDispatchAppConfig',
+    'openedx.core.djangoapps.oauth_dispatch',
 
     'third_party_auth',
 

@@ -1032,6 +1032,7 @@ INSTALLED_APPS = [
 
     # django-oauth-toolkit
     'oauth2_provider',
+    'openedx.core.djangoapps.oauth_dispatch',
 
     # These are apps that aren't strictly needed by Studio, but are imported by
     # other apps that are.  Django 1.8 wants to have imported models supported
@@ -1375,10 +1376,10 @@ COMPREHENSIVE_THEME_LOCALE_PATHS = []
 
 # This is required for the migrations in oauth_dispatch.models
 # otherwise it fails saying this attribute is not present in Settings
-# Although Studio does not exable OAuth2 Provider capability, the new approach
+# Although Studio does not enable OAuth2 Provider capability, the new approach
 # to generating test databases will discover and try to create all tables
 # and this setting needs to be present
-OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
+OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth_dispatch.Application'
 
 # Used with Email sending
 RETRY_ACTIVATION_EMAIL_MAX_ATTEMPTS = 5
