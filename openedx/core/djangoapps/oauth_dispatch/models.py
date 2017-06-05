@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.conf import settings
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+# from django.utils.translation import ugettext_lazy as _
 from oauth2_provider.models import AbstractApplication
 from pytz import utc
 
@@ -12,17 +12,24 @@ class Application(AbstractApplication):
 
     Allows for declared authorization grant type in addition to the client credentials grant.
     """
-    restricted = models.BooleanField(
-        default=False,
-        help_text=_('Restricted clients receive expired access tokens. '
-                    'They are intended to provide identity information to third-parties.')
-    )
+
+    class Meta(object):
+        # NOTE: We use this table name to avoid issues with migrating existing data
+        # and updating foreign keys for existing installations.
+        db_table = 'oauth2_provider_application'
+
+    # TODO Phase 3: Use this instead of RestrictedApplication
+    # restricted = models.BooleanField(
+    #     default=False,
+    #     help_text=_('Restricted clients receive expired access tokens. '
+    #                 'They are intended to provide identity information to third-parties.')
+    # )
 
     def allows_grant_type(self, *grant_types):
         return bool({self.authorization_grant_type, self.GRANT_CLIENT_CREDENTIALS}.intersection(set(grant_types)))
 
 
-# TODO Deprecate this model, and add a boolean to the Application model
+# TODO Phase 3: Deprecate this model, and add a boolean to the Application model
 class RestrictedApplication(models.Model):
     """
     This model lists which django-oauth-toolkit Applications are considered 'restricted'
