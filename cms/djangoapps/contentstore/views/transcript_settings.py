@@ -1,0 +1,88 @@
+"""
+Views related to the transcript preferences feature
+"""
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseNotFound
+from django.views.decorators.http import require_POST
+from edxval.api import (
+    get_3rd_party_transcription_plans,
+    update_transcript_credentials_state_for_org,
+)
+from opaque_keys.edx.keys import CourseKey
+
+from openedx.core.djangoapps.video_config.models import VideoTranscriptEnabledFlag
+from openedx.core.djangoapps.video_pipeline.api import update_3rd_party_transcription_service_credentials
+from util.json_request import JsonResponse, expect_json
+
+from contentstore.views.videos import TranscriptProvider
+
+__all__ = ['transcript_credentials_handler']
+
+
+def validate_transcript_credentials(provider, **credentials):
+    """
+    Validates transcript credentials.
+
+    Validations:
+        Providers must be either 3PlayMedia or Cielo24.
+        In case of:
+            3PlayMedia - 'api_key' and 'api_secret_key' are required.
+            Cielo24 - 'api_key' and 'username' are required.
+    """
+    error_message, validated_credentials = '', {}
+    valid_providers = get_3rd_party_transcription_plans().keys()
+    if provider in valid_providers:
+        must_have_props = []
+        if provider == TranscriptProvider.THREE_PLAY_MEDIA:
+            must_have_props = ['api_key', 'api_secret_key']
+        elif provider == TranscriptProvider.CIELO24:
+            must_have_props = ['api_key', 'username']
+
+        missing = [must_have_prop for must_have_prop in must_have_props if must_have_prop not in credentials.keys()]
+        if missing:
+            error_message = u'{missing} must be specified.'.format(missing=' and '.join(missing))
+            return error_message, validated_credentials
+
+        validated_credentials.update({
+            prop: credentials[prop] for prop in must_have_props
+        })
+    else:
+        error_message = u'Invalid Provider {provider}.'.format(provider=provider)
+
+    return error_message, validated_credentials
+
+
+@expect_json
+@login_required
+@require_POST
+def transcript_credentials_handler(request, course_key_string):
+    """
+    JSON view handler to update the transcript organization credentials.
+
+    Arguments:
+        request: WSGI request object
+        course_key_string: A course identifier to extract the org.
+
+    Returns:
+        - An OK response if credentials are valid and successfully updated in edx-video-pipeline.
+        - A 404 response if transcript feature is not enabled fot this course.
+        - A 400 if credentials do not pass validations, hence not updated in edx-video-pipeline.
+    """
+    course_key = CourseKey.from_string(course_key_string)
+    if not VideoTranscriptEnabledFlag.feature_enabled(course_key):
+        return HttpResponseNotFound()
+
+    provider = request.json.pop('provider')
+    error_message, validated_credentials = validate_transcript_credentials(provider=provider, **request.json)
+    if error_message:
+        response = JsonResponse({'message': error_message}, status=400)
+    else:
+        # Send the validated credentials to edx-video-pipeline.
+        credentials_payload = dict(validated_credentials, org=course_key.org, provider=provider)
+        is_updated = update_3rd_party_transcription_service_credentials(**credentials_payload)
+        # Cache credentials existence in edx-val.
+        update_transcript_credentials_state_for_org(org=course_key.org, provider=provider, exists=is_updated)
+        # Send appropriate response based on whether the credentials update was a success.
+        response = JsonResponse(status=200 if is_updated else 400)
+
+    return response
