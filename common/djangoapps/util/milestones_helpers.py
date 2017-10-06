@@ -212,7 +212,8 @@ def get_required_content(course_key, user):
     and if those milestones can be fulfilled via completion of a particular course content module
     """
     required_content = []
-    if settings.FEATURES.get('MILESTONES_APP'):
+    # TODO This will probably pose issues for courses that rely on milestones to gate content.
+    if settings.FEATURES.get('MILESTONES_APP') and user.is_authenticated():
         # Get all of the outstanding milestones for this course, for this user
         try:
             milestone_paths = get_course_milestones_fulfillment_paths(
