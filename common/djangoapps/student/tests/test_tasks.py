@@ -1,12 +1,10 @@
 """
 Tests for the Sending activation email celery tasks
 """
-
 import mock
 from boto.exception import NoAuthHandlerFound
 from django.conf import settings
 from django.test import TestCase
-
 from lms.djangoapps.courseware.tests.factories import UserFactory
 from student.tasks import send_activation_email
 
