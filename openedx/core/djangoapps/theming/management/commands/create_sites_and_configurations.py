@@ -14,11 +14,11 @@ SITES = {
         "configuration": {}
     },
     "wharton": {
-        "theme_dir_name": "	professionaleducation.wharton.upenn.edu",
+        "theme_dir_name": "professionaleducation.wharton.upenn.edu",
         "configuration": {}
     },
     "harvardx": {
-        "theme_dir_name": "	harvardxplus.harvard.edu",
+        "theme_dir_name": "harvardxplus.harvard.edu",
         "configuration": {}
     }
 }
