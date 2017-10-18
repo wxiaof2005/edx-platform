@@ -12,7 +12,8 @@ $seq-nav-height: 44px;
 
   display: block;
 
-  &:hover, &:focus {
+  &:hover,
+  &:focus {
     background: none;
   }
 }
@@ -32,14 +33,15 @@ $seq-nav-height: 44px;
 
       display: block;
 
-      &:hover, &:focus {
+      &:hover,
+      &:focus {
         background: none;
       }
     }
   }
 }
 
-%ui-clear-button  {
+%ui-clear-button {
   background-color: transparent;
   background-image: none;
   background-position: center 14px;
@@ -60,15 +62,24 @@ $seq-nav-height: 44px;
 .sequence-nav {
   @extend .topbar;
 
-  margin: 0 0 $baseline 0;
+  margin: 0 auto $baseline;
   position: relative;
   border-bottom: none;
   z-index: 0;
   height: $seq-nav-height;
   display: flex;
+  justify-content: center;
 
   .sequence-nav-button {
     max-width: 200px;
+
+    &.button-previous {
+      order: -999;
+    }
+
+    &.button-next {
+      order: 999;
+    }
   }
 
   @media print {
@@ -81,6 +92,13 @@ $seq-nav-height: 44px;
     position: relative;
     height: 100%;
     flex-grow: 1;
+
+    // Hide the sequence list for mobile sizes
+    display: none;
+
+    @include media-breakpoint-up(md) {
+      display: block;
+    }
   }
 
   ol {
@@ -127,28 +145,28 @@ $seq-nav-height: 44px;
 
         //video
         &.seq_video {
-          .icon:before {
+          .icon::before {
             content: "\f008"; // .fa-film
           }
         }
 
         //other
         &.seq_other {
-          .icon:before {
+          .icon::before {
             content: "\f02d"; // .fa-book
           }
         }
 
         //vertical
         &.seq_vertical {
-          .icon:before {
+          .icon::before {
             content: "\f00b";  // .fa-tasks
           }
         }
 
         //problems
         &.seq_problem {
-          .icon:before {
+          .icon::before {
             content: "\f044";  // .fa-pencil-square-o
           }
         }

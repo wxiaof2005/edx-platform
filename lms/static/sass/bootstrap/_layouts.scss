@@ -1,8 +1,9 @@
 // LMS layouts
 
 .content-wrapper {
+  max-width: map-get($container-max-widths, xl);
   margin-top: $baseline;
-  padding-bottom: $baseline/2;
+  padding: 0 $baseline $baseline/2;
 
   .course-tabs {
     padding: 0 $baseline*2;
