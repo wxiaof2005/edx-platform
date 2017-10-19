@@ -32,63 +32,74 @@ class EntitlementDataTest(ModuleStoreTestCase):
         self.user = UserFactory.create(username=self.USERNAME, email=self.EMAIL, password=self.PASSWORD)
         self.client.login(username=self.USERNAME, password=self.PASSWORD)
 
-    def _add_entitlement_for_user(self, course, user, parent_uuid):
+    def _add_entitlement_for_user(self, user, parent_uuid):
         entitlement_data = {
             'user': user,
             'course_uuid': parent_uuid,
             'mode': 'verified',
         }
-        stored_entitlement, is_created = CourseEntitlement.update_or_create_new_entitlement(
-            user,
-            parent_uuid,
-            entitlement_data
+        stored_entitlement, is_created = CourseEntitlement.objects.update_or_create(
+            user=user,
+            course_uuid=parent_uuid,
+            defaults=entitlement_data
         )
         return stored_entitlement, is_created
 
     def test_get_entitlement_info(self):
-        stored_entitlement, is_created = self._add_entitlement_for_user(self.course, self.user, self.course_uuid)
+        stored_entitlement, is_created = self._add_entitlement_for_user(self.user, self.course_uuid)
         self.assertTrue(is_created)
 
         # Get the Entitlement and verify the data
-        entitlement = CourseEntitlement.get_user_course_entitlement(self.user, self.course_uuid)
+        entitlement = CourseEntitlement.objects.get(
+            user=self.user,
+            course_uuid=self.course_uuid,
+            expired_at=None
+        )
         self.assertEqual(entitlement.course_uuid, self.course_uuid)
         self.assertEqual(entitlement.mode, 'verified')
         self.assertIsNone(entitlement.enrollment_course_run)
 
     def test_get_course_entitlements(self):
-        course2 = CourseFactory.create()
-
-        stored_entitlement, is_created = self._add_entitlement_for_user(self.course, self.user, self.course_uuid)
+        stored_entitlement, is_created = self._add_entitlement_for_user(self.user, self.course_uuid)
         self.assertTrue(is_created)
 
         course2_uuid = uuid.uuid4()
-        stored_entitlement2, is_created2 = self._add_entitlement_for_user(course2, self.user, course2_uuid)
+        stored_entitlement2, is_created2 = self._add_entitlement_for_user(self.user, course2_uuid)
         self.assertTrue(is_created2)
 
-        # Get the Entitlement and verify the data
-        entitlement_list = CourseEntitlement.entitlements_for_user(self.user)
+        entitlement_list = CourseEntitlement.objects.filter(
+            user=self.user
+        ).all()
 
         self.assertEqual(2, len(entitlement_list))
         self.assertEqual(self.course_uuid, entitlement_list[0].course_uuid)
         self.assertEqual(course2_uuid, entitlement_list[1].course_uuid)
 
     def test_set_enrollment(self):
-        stored_entitlement, is_created = self._add_entitlement_for_user(self.course, self.user, self.course_uuid)
+        stored_entitlement, is_created = self._add_entitlement_for_user(self.user, self.course_uuid)
         self.assertTrue(is_created)
 
-        # Entitlement set not enroll the user in the Course run
+        # Entitlement created now enroll the user in the Course run
         enrollment = CourseEnrollmentFactory(
             user=self.user,
             course_id=self.course.id,
             mode="verified",
         )
-        CourseEntitlement.update_entitlement_enrollment(self.user, self.course_uuid, enrollment)
 
-        entitlement = CourseEntitlement.get_user_course_entitlement(self.user, self.course_uuid)
+        CourseEntitlement.objects.filter(
+            user=self.user,
+            course_uuid=self.course_uuid
+        ).update(enrollment_course_run_id=enrollment)
+
+        entitlement = CourseEntitlement.objects.get(
+            user=self.user,
+            course_uuid=self.course_uuid,
+            expired_at=None
+        )
         self.assertIsNotNone(entitlement.enrollment_course_run)
 
     def test_remove_enrollment(self):
-        stored_entitlement, is_created = self._add_entitlement_for_user(self.course, self.user, self.course_uuid)
+        stored_entitlement, is_created = self._add_entitlement_for_user(self.user, self.course_uuid)
         self.assertTrue(is_created)
 
         # Entitlement set not enroll the user in the Course run
@@ -97,11 +108,27 @@ class EntitlementDataTest(ModuleStoreTestCase):
             course_id=self.course.id,
             mode="verified",
         )
-        CourseEntitlement.update_entitlement_enrollment(self.user, self.course_uuid, enrollment)
+        CourseEntitlement.objects.filter(
+            user=self.user,
+            course_uuid=self.course_uuid
+        ).update(enrollment_course_run_id=enrollment)
 
-        entitlement = CourseEntitlement.get_user_course_entitlement(self.user, self.course_uuid)
+        entitlement = CourseEntitlement.objects.get(
+            user=self.user,
+            course_uuid=self.course_uuid,
+            expired_at=None
+        )
         self.assertIsNotNone(entitlement.enrollment_course_run)
 
-        CourseEntitlement.update_entitlement_enrollment(self.user, self.course_uuid, None)
-        entitlement = CourseEntitlement.get_user_course_entitlement(self.user, self.course_uuid)
+        # Simulate Removing the Course Enrollment
+        CourseEntitlement.objects.filter(
+            user=self.user,
+            course_uuid=self.course_uuid
+        ).update(enrollment_course_run_id=None)
+
+        entitlement = CourseEntitlement.objects.get(
+            user=self.user,
+            course_uuid=self.course_uuid,
+            expired_at=None
+        )
         self.assertIsNone(entitlement.enrollment_course_run)
