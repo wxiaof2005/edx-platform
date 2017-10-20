@@ -41,40 +41,30 @@ class TestAPIUtils(VideoPipelineIntegrationMixin, TestCase):
         self.assertFalse(is_updated)
 
     @ddt.data(
-        (
-            {
-                'username': 'Jason_cielo_24',
-                'api_key': '12345678',
-            },
-            Mock(),
-            True
-        ),
-        (
-            {
-                'api_key': '12345678',
-                'api_secret': '11111111',
-            },
-            Mock(),
-            True
-        ),
+        {
+            'username': 'Jason_cielo_24',
+            'api_key': '12345678',
+        },
+        {
+            'api_key': '12345678',
+            'api_secret': '11111111',
+        }
     )
-    @ddt.unpack
     @patch('openedx.core.djangoapps.video_pipeline.api.log')
     @patch('openedx.core.djangoapps.video_pipeline.utils.EdxRestApiClient')
-    def test_update_transcription_service_credentials(self, credentials_payload, pipeline_response,
-                                                      expected_is_updated, mock_client, mock_logger):
+    def test_update_transcription_service_credentials(self, credentials_payload, mock_client, mock_logger):
         """
         Tests that the update transcription service credentials api util works as expected.
         """
         # Mock the post request
-        mock_credentials_endpoint = mock_client.return_value.transcript_credentials
-        mock_credentials_endpoint.post = pipeline_response
-        # try updating the transcription service credentials
+        mock_credentials_endpoint = mock_client.return_value.api.transcript_credentials
+        # Try updating the transcription service credentials
         is_updated = update_3rd_party_transcription_service_credentials(**credentials_payload)
 
         mock_credentials_endpoint.post.assert_called_with(credentials_payload)
-        self.assertEqual(mock_logger.exception.called, not expected_is_updated)
-        self.assertEqual(is_updated, expected_is_updated)
+        # Making sure log.exception is not called.
+        self.assertFalse(mock_logger.exception.called)
+        self.assertTrue(is_updated)
 
     @patch('openedx.core.djangoapps.video_pipeline.api.log')
     @patch('openedx.core.djangoapps.video_pipeline.utils.EdxRestApiClient')
@@ -84,7 +74,7 @@ class TestAPIUtils(VideoPipelineIntegrationMixin, TestCase):
         during communication with edx-video-pipeline.
         """
         # Mock the post request
-        mock_credentials_endpoint = mock_client.return_value.transcript_credentials
+        mock_credentials_endpoint = mock_client.return_value.api.transcript_credentials
         mock_credentials_endpoint.post = Mock(side_effect=HttpClientError(content='invalid_credentials'))
         # try updating the transcription service credentials
         credentials_payload = {'invalid_param': 'invalid_value'}
@@ -93,6 +83,6 @@ class TestAPIUtils(VideoPipelineIntegrationMixin, TestCase):
         mock_credentials_endpoint.post.assert_called_with(credentials_payload)
         self.assertFalse(is_updated)
         mock_logger.exception.assert_called_with(
-            '[video-pipeline-service] unable to update transcript credentials -- response -- %s',
+            '[video-pipeline-service] Unable to update transcript credentials -- response -- %s',
             'invalid_credentials'
         )
