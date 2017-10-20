@@ -57,7 +57,7 @@ class TranscriptCredentialsTest(CourseTestCase):
                 'provider': 'invalid_provider',
                 'api_key': '1234'
             },
-            True,
+            None,
             400
         ),
         (

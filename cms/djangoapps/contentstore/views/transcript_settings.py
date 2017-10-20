@@ -28,6 +28,9 @@ def validate_transcript_credentials(provider, **credentials):
         In case of:
             3PlayMedia - 'api_key' and 'api_secret_key' are required.
             Cielo24 - 'api_key' and 'username' are required.
+
+        It ignores any extra/unrelated parameters passed in credentials and
+        only returns the validated ones.
     """
     error_message, validated_credentials = '', {}
     valid_providers = get_3rd_party_transcription_plans().keys()
@@ -64,8 +67,8 @@ def transcript_credentials_handler(request, course_key_string):
         course_key_string: A course identifier to extract the org.
 
     Returns:
-        - An OK response if credentials are valid and successfully updated in edx-video-pipeline.
-        - A 404 response if transcript feature is not enabled fot this course.
+        - A 200 response if credentials are valid and successfully updated in edx-video-pipeline.
+        - A 404 response if transcript feature is not enabled for this course.
         - A 400 if credentials do not pass validations, hence not updated in edx-video-pipeline.
     """
     course_key = CourseKey.from_string(course_key_string)
@@ -80,9 +83,9 @@ def transcript_credentials_handler(request, course_key_string):
         # Send the validated credentials to edx-video-pipeline.
         credentials_payload = dict(validated_credentials, org=course_key.org, provider=provider)
         is_updated = update_3rd_party_transcription_service_credentials(**credentials_payload)
-        # Cache credentials existence in edx-val.
+        # Cache credentials state in edx-val.
         update_transcript_credentials_state_for_org(org=course_key.org, provider=provider, exists=is_updated)
-        # Send appropriate response based on whether the credentials update was a success.
+        # Send appropriate response based on whether credentials were updated or not.
         response = JsonResponse(status=200 if is_updated else 400)
 
     return response
