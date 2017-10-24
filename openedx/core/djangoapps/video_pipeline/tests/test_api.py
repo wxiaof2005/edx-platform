@@ -83,6 +83,7 @@ class TestAPIUtils(VideoPipelineIntegrationMixin, TestCase):
         mock_credentials_endpoint.post.assert_called_with(credentials_payload)
         self.assertFalse(is_updated)
         mock_logger.exception.assert_called_with(
-            '[video-pipeline-service] Unable to update transcript credentials -- response -- %s',
+            '[video-pipeline-service] Unable to update transcript credentials -- payload=%s -- response=%s.',
+            credentials_payload,
             'invalid_credentials'
         )
