@@ -38,7 +38,8 @@ def update_3rd_party_transcription_service_credentials(**credentials_payload):
         except HttpClientError as ex:
             is_updated = False
             log.exception(
-                '[video-pipeline-service] Unable to update transcript credentials -- response -- %s',
+                '[video-pipeline-service] Unable to update transcript credentials -- payload=%s -- response=%s.',
+                credentials_payload,
                 ex.content,
             )
 
