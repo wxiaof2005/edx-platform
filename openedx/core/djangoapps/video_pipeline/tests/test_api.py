@@ -57,7 +57,7 @@ class TestAPIUtils(VideoPipelineIntegrationMixin, TestCase):
         Tests that the update transcription service credentials api util works as expected.
         """
         # Mock the post request
-        mock_credentials_endpoint = mock_client.return_value.api.transcript_credentials
+        mock_credentials_endpoint = mock_client.return_value.transcript_credentials
         # Try updating the transcription service credentials
         is_updated = update_3rd_party_transcription_service_credentials(**credentials_payload)
 
@@ -74,7 +74,7 @@ class TestAPIUtils(VideoPipelineIntegrationMixin, TestCase):
         during communication with edx-video-pipeline.
         """
         # Mock the post request
-        mock_credentials_endpoint = mock_client.return_value.api.transcript_credentials
+        mock_credentials_endpoint = mock_client.return_value.transcript_credentials
         mock_credentials_endpoint.post = Mock(side_effect=HttpClientError(content='invalid_credentials'))
         # try updating the transcription service credentials
         credentials_payload = {'invalid_param': 'invalid_value'}

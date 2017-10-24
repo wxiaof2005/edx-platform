@@ -33,7 +33,7 @@ def update_3rd_party_transcription_service_credentials(**credentials_payload):
         client = create_video_pipeline_api_client(user=video_pipeline_user, api_url=pipeline_integration.api_url)
 
         try:
-            client.api.transcript_credentials.post(credentials_payload)
+            client.transcript_credentials.post(credentials_payload)
             is_updated = True
         except HttpClientError as ex:
             is_updated = False

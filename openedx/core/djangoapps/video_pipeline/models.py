@@ -18,10 +18,10 @@ class VideoPipelineIntegration(ConfigurationModel):
 
     service_username = models.CharField(
         max_length=100,
-        default='cms_video_pipeline_service_user',
+        default='video_pipeline_service_user',
         null=False,
         blank=False,
-        help_text=_('Username created for Video Pipeline Integration, e.g. cms_video_pipeline_service_user.')
+        help_text=_('Username created for Video Pipeline Integration, e.g. video_pipeline_service_user.')
     )
 
     def get_service_user(self):
