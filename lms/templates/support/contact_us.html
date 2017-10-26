@@ -1,7 +1,9 @@
 <%page expression_filter="h"/>
 
 <%!
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
+
 from openedx.core.djangolib.js_utils import js_escaped_string
 %>
 
@@ -28,6 +30,8 @@ from openedx.core.djangolib.js_utils import js_escaped_string
         var context = {
             'marketingUrl': "${marketing_link('FAQ') | n, js_escaped_string}",
             'loginQuery': "/login${login_query() | n, js_escaped_string}",
+            'dashboardUrl': "${reverse('dashboard') | n, js_escaped_string}",
+            'homepageUrl': "${marketing_link('ROOT') | n, js_escaped_string}",
         }
 
         % if user.is_authenticated():
