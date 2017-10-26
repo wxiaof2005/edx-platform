@@ -93,7 +93,7 @@ define(
                     none: {
                         key: 'none',
                         value: '',
-                        displayName: 'N/A'
+                        displayName: 'None'
                     },
                     Cielo24: {
                         key: 'Cielo24',
@@ -158,7 +158,7 @@ define(
 
             verifyProviderList = function(selectedProvider) {
                 var $transcriptProvidersListEl = $courseVideoSettingsEl.find('.transcript-provider-wrapper .transcript-provider-group');    // eslint-disable-line max-len
-                // Check N/A provider is selected.
+                // Check None provider is selected.
                 expect($transcriptProvidersListEl.find('input[type=radio]:checked').val()).toEqual(selectedProvider.value); // eslint-disable-line max-len
                 _.each(providers, function(provider, key) {
                     $transcriptProvidersListEl.find('label[for=transcript-provider-' + key + ']').val(provider.displayName);    // eslint-disable-line max-len
@@ -359,6 +359,40 @@ define(
                 verifyTranscriptPreferences();
             });
 
+            it('resets to active preferences when clicked on cancel', function() {
+                var selectedProvider = '3PlayMedia';
+
+                renderCourseVideoSettingsView(
+                    activeTranscriptPreferences,
+                    transcriptionPlans,
+                    transcriptOrganizationCredentials
+                );
+
+                // First check preferance are selected correctly in HTML.
+                verifyTranscriptPreferences();
+                expect(courseVideoSettingsView.selectedProvider, providers.Cielo24);
+
+                // Now change preferences.
+                // Select provider.
+                changeProvider(selectedProvider);
+                expect(courseVideoSettingsView.selectedProvider, selectedProvider);
+
+                // Select turnaround.
+                selectPreference(
+                    '.transcript-turnaround',
+                    transcriptionPlans[selectedProvider].turnaround.default
+                );
+                expect(
+                    courseVideoSettingsView.selectedTurnaroundPlan,
+                    transcriptionPlans[selectedProvider].turnaround.default
+                );
+
+                // Now click and cancel and verify active preferences are shown.
+                $courseVideoSettingsEl.find('.action-cancel').click();
+                verifyTranscriptPreferences();
+                expect(courseVideoSettingsView.selectedProvider, providers.Cielo24);
+            });
+
             it('shows video source language directly in case of 3Play provider', function() {
                 var sourceLanguages,
                     selectedProvider = '3PlayMedia';
@@ -505,12 +539,12 @@ define(
             });
 
             it('removes transcript settings on update settings button click when no provider is selected', function() {
-                // Reset to N/A provider
+                // Reset to None provider
                 resetProvider();
                 verifyProviderList(providers.none);
 
                 // Verify that success message is shown.
-                verifyMessage('success', 'Settings updated');
+                verifyMessage('success', 'Automatic transcripts disabled');
             });
 
             it('shows error message if server sends error', function() {
@@ -574,10 +608,10 @@ define(
                 expect($courseVideoSettingsEl.find('.transcript-provider-wrapper .transcript-provider-group')).not.toExist();   // eslint-disable-line max-len
             });
 
-            it('does not show transcript preferences or organization credentials if N/A provider is saved', function() {
+            it('does not show transcript preferences or organization credentials if None provider is saved', function() {   // eslint-disable-line max-len
                 renderCourseVideoSettingsView(null, transcriptionPlans);
 
-                // Check N/A provider
+                // Check None provider
                 resetProvider();
                 verifyProviderList(providers.none);
 
@@ -585,10 +619,10 @@ define(
                 expect($courseVideoSettingsEl.find('.transcript-provider-wrapper .selected-transcript-provider')).not.toExist();    // eslint-disable-line max-len
             });
 
-            it('does not show transcript preferences or organization credentials if N/A provider is checked', function() {  // eslint-disable-line max-len
+            it('does not show transcript preferences or organization credentials if None provider is checked', function() {  // eslint-disable-line max-len
                 renderCourseVideoSettingsView(null, transcriptionPlans);
 
-                // Check N/A provider
+                // Check None provider
                 resetProvider();
                 verifyProviderList(providers.none);
 
@@ -677,8 +711,8 @@ define(
                 expect($courseVideoSettingsEl.find('.transcription-account-details.warning')).toExist();
                 // Verify message
                 expect($courseVideoSettingsEl.find('.transcription-account-details').html()).toEqual(
-                    '<span>By entering the set of credntials below, ' +
-                    'you will be overwriting your organization\'s credentials.</span>'
+                    '<span>This action updates the ' + courseVideoSettingsView.selectedProvider +
+                    ' information for your entire organization.</span>'
                 );
             });
 
@@ -691,8 +725,7 @@ define(
                 expect($courseVideoSettingsEl.find('.transcription-account-details.warning')).not.toExist();
                 // Initial detail message is shown instead.
                 expect($courseVideoSettingsEl.find('.transcription-account-details').html()).toEqual(
-                    '<span>Please enter your organization\'s account information. ' +
-                    'Remember that all courses in your organization will use this account.</span>'
+                    '<span>Enter the account information for your organization.</span>'
                 );
             });
 

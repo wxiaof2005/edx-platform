@@ -36,6 +36,7 @@ function($, Backbone, _, gettext, moment, ViewUtils, HtmlUtils, StringUtils, Tra
             'click .action-change-provider': 'renderOrganizationCredentials',
             'click .action-update-org-credentials': 'updateOrganizationCredentials',
             'click .action-update-course-video-settings': 'updateCourseVideoSettings',
+            'click .action-cancel': 'discardChanges',
             'click .action-close-course-video-settings': 'closeCourseVideoSettings'
         },
 
@@ -177,12 +178,16 @@ function($, Backbone, _, gettext, moment, ViewUtils, HtmlUtils, StringUtils, Tra
         },
 
         providerSelected: function(event) {
+            this.resetPlanData();
+            this.selectedProvider = event.target.value;
+            // Re-render view
+            this.reRenderView();
+        },
+
+        reRenderView: function() {
             var $courseVideoSettingsContentEl = this.$el.find('.course-video-settings-content'),
                 dateModified = this.activeTranscriptionPlan ?
                     moment.utc(this.activeTranscriptionPlan.modified).format('ll') : '';
-
-            this.resetPlanData();
-            this.selectedProvider = event.target.value;
 
             if (!this.selectedProvider) {
                 // Hide organization credentials and transcript preferences views
@@ -254,7 +259,7 @@ function($, Backbone, _, gettext, moment, ViewUtils, HtmlUtils, StringUtils, Tra
                             {
                                 key: 'none',
                                 value: '',
-                                name: gettext('N/A'),
+                                name: gettext('None'),
                                 checked: this.selectedProvider === '' ? 'checked' : ''
                             },
                             {
@@ -672,7 +677,11 @@ function($, Backbone, _, gettext, moment, ViewUtils, HtmlUtils, StringUtils, Tra
                     type: 'DELETE',
                     url: self.transcriptHandlerUrl
                 }).done(function() {
-                    self.updateSuccessResponseStatus(null);
+                    responseTranscriptPreferences = null;
+                    self.updateSuccessResponseStatus(
+                        responseTranscriptPreferences,
+                        gettext('Automatic transcripts disabled')
+                    );
                 }).fail(function(jqXHR) {
                     if (jqXHR.responseText) {
                         self.updateFailResponseStatus(jqXHR.responseText);
@@ -716,9 +725,17 @@ function($, Backbone, _, gettext, moment, ViewUtils, HtmlUtils, StringUtils, Tra
                     )
                 );
             }).fail(function(jqXHR) {
-                if (jqXHR.responseText) {
-                    self.updateFailResponseStatus(jqXHR.responseText);
+                var errorMessage;
+                // Only set error message in case 400 status.
+                if (jqXHR.responseText && jqXHR.status === 400) {
+                    errorMessage = jqXHR.responseText;
+                } else {
+                    // TODO: check with @sylvia
+                    // This error happens when invalid server configuration for JWT authentication and communication
+                    // b/w platform and video-pipleine.
+                    errorMessage = gettext('Server encoutered error.');
                 }
+                self.updateFailResponseStatus(errorMessage);
             });
         },
 
@@ -735,6 +752,13 @@ function($, Backbone, _, gettext, moment, ViewUtils, HtmlUtils, StringUtils, Tra
             } else {
                 $messageWrapperEl.empty();
             }
+        },
+
+        discardChanges: function() {
+            this.setActiveTranscriptPlanData();
+            // Re-render views
+            this.renderProviders();
+            this.reRenderView();
         },
 
         renderOrganizationCredentials: function() {
