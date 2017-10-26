@@ -28,7 +28,7 @@ class TestAPIUtils(VideoPipelineIntegrationMixin, TestCase):
         """
         self.pipeline_integration.enabled = False
         self.pipeline_integration.save()
-        is_updated = update_3rd_party_transcription_service_credentials()
+        __, is_updated = update_3rd_party_transcription_service_credentials()
         self.assertFalse(is_updated)
 
     def test_update_transcription_service_credentials_with_unknown_user(self):
@@ -37,7 +37,7 @@ class TestAPIUtils(VideoPipelineIntegrationMixin, TestCase):
         """
         self.pipeline_integration.service_username = 'non_existent_user'
         self.pipeline_integration.save()
-        is_updated = update_3rd_party_transcription_service_credentials()
+        __, is_updated = update_3rd_party_transcription_service_credentials()
         self.assertFalse(is_updated)
 
     @ddt.data(
@@ -59,10 +59,11 @@ class TestAPIUtils(VideoPipelineIntegrationMixin, TestCase):
         # Mock the post request
         mock_credentials_endpoint = mock_client.return_value.transcript_credentials
         # Try updating the transcription service credentials
-        is_updated = update_3rd_party_transcription_service_credentials(**credentials_payload)
+        error_message, is_updated = update_3rd_party_transcription_service_credentials(**credentials_payload)
 
         mock_credentials_endpoint.post.assert_called_with(credentials_payload)
         # Making sure log.exception is not called.
+        self.assertEqual(error_message, '')
         self.assertFalse(mock_logger.exception.called)
         self.assertTrue(is_updated)
 
@@ -73,17 +74,25 @@ class TestAPIUtils(VideoPipelineIntegrationMixin, TestCase):
         Tests that the update transcription service credentials logs the exception occurring
         during communication with edx-video-pipeline.
         """
+        error_content = '{"message": "invalid creds"}'
         # Mock the post request
         mock_credentials_endpoint = mock_client.return_value.transcript_credentials
-        mock_credentials_endpoint.post = Mock(side_effect=HttpClientError(content='invalid_credentials'))
+        mock_credentials_endpoint.post = Mock(side_effect=HttpClientError(content=error_content))
         # try updating the transcription service credentials
-        credentials_payload = {'invalid_param': 'invalid_value'}
-        is_updated = update_3rd_party_transcription_service_credentials(**credentials_payload)
+        credentials_payload = {
+            'org': 'mit',
+            'provider': 'ABC Provider',
+            'api_key': '61c56a8d0'
+        }
+        error_message, is_updated = update_3rd_party_transcription_service_credentials(**credentials_payload)
 
         mock_credentials_endpoint.post.assert_called_with(credentials_payload)
+        # Assert the results.
         self.assertFalse(is_updated)
+        self.assertEqual(error_message, "invalid creds")
         mock_logger.exception.assert_called_with(
-            '[video-pipeline-service] Unable to update transcript credentials -- payload=%s -- response=%s.',
-            credentials_payload,
-            'invalid_credentials'
+            '[video-pipeline-service] Unable to update transcript credentials -- org=%s -- provider=%s -- response=%s.',
+            credentials_payload['org'],
+            credentials_payload['provider'],
+            error_content
         )
