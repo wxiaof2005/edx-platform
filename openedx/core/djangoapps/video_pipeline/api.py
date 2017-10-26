@@ -1,6 +1,7 @@
 """
 API utils in order to communicate to edx-video-pipeline.
 """
+import json
 import logging
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -22,13 +23,13 @@ def update_3rd_party_transcription_service_credentials(**credentials_payload):
     Returns:
         A Boolean specifying whether the credentials were updated or not.
     """
-    is_updated = False
+    is_updated, error_message = False, ''
     pipeline_integration = VideoPipelineIntegration.current()
     if pipeline_integration.enabled:
         try:
             video_pipeline_user = pipeline_integration.get_service_user()
         except ObjectDoesNotExist:
-            return is_updated
+            return error_message, is_updated
 
         client = create_video_pipeline_api_client(user=video_pipeline_user, api_url=pipeline_integration.api_url)
 
@@ -38,9 +39,12 @@ def update_3rd_party_transcription_service_credentials(**credentials_payload):
         except HttpClientError as ex:
             is_updated = False
             log.exception(
-                '[video-pipeline-service] Unable to update transcript credentials -- payload=%s -- response=%s.',
-                credentials_payload,
+                ('[video-pipeline-service] Unable to update transcript credentials '
+                 '-- org=%s -- provider=%s -- response=%s.'),
+                credentials_payload.get('org'),
+                credentials_payload.get('provider'),
                 ex.content,
             )
+            error_message = json.loads(ex.content)['message']
 
-    return is_updated
+    return error_message, is_updated

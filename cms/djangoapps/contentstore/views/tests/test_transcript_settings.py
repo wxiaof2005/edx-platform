@@ -86,7 +86,7 @@ class TranscriptCredentialsTest(CourseTestCase):
         """
         Tests that transcript credentials handler works as expected.
         """
-        mock_update_credentials.return_value = is_updated
+        mock_update_credentials.return_value = ('', is_updated)
         transcript_settings_url = self.get_url_for_course_key(self.course.id)
         response = self.client.post(
             transcript_settings_url,
