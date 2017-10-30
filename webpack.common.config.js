@@ -7,6 +7,11 @@ var webpack = require('webpack');
 var BundleTracker = require('webpack-bundle-tracker');
 var StringReplace = require('string-replace-webpack-plugin');
 
+var ExtractTextPlugin = require('extract-text-webpack-plugin');
+var extractSass = new ExtractTextPlugin({
+    filename: 'css/[name].[contenthash].css'
+});
+
 var namespacedRequireFiles = [
     path.resolve(__dirname, 'common/static/common/js/components/views/feedback_notification.js'),
     path.resolve(__dirname, 'common/static/common/js/components/views/feedback.js')
@@ -42,6 +47,7 @@ module.exports = {
     },
 
     plugins: [
+        new ExtractTextPlugin('node_modules/@edx/studio-frontend/dist/studio-frontend.min.css'),
         new webpack.NoEmitOnErrorsPlugin(),
         new webpack.NamedModulesPlugin(),
         new BundleTracker({
@@ -135,6 +141,33 @@ module.exports = {
             {
                 test: /\.(woff2?|ttf|svg|eot)(\?v=\d+\.\d+\.\d+)?$/,
                 loader: 'file-loader'
+            },
+            {
+                test: /(.scss|.css)$/,
+                include: [
+                    /studio-frontend/,
+                    /paragon/,
+                    /font-awesome/
+                ],
+                use: extractSass.extract({
+                    use: [{
+                        loader: 'css-loader',
+                        options: {
+                            modules: true,
+                            localIdentName: '[name]__[local]___[hash:base64:5]'
+                        }
+                    }, {
+                        loader: 'sass-loader',
+                        options: {
+                            data: '$base-rem-size: 0.625; @import "paragon-reset";',
+                            includePaths: [
+                                path.join(__dirname, './node_modules/@edx/paragon/src/utils'),
+                                path.join(__dirname, './node_modules/')
+                            ]
+                        }
+                    }],
+                    fallback: 'style-loader'
+                })
             }
         ]
     },

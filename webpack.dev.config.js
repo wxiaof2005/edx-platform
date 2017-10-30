@@ -20,34 +20,5 @@ module.exports = Merge.smart(commonConfig, {
         new webpack.DefinePlugin({
             'process.env.NODE_ENV': JSON.stringify('development')
         })
-    ],
-    module: {
-        rules: [
-            {
-                test: /(.scss|.css)$/,
-                include: [
-                    /studio-frontend/,
-                    /paragon/,
-                    /font-awesome/
-                ],
-                use: [{
-                    loader: 'css-loader',
-                    options: {
-                        modules: true,
-                        localIdentName: '[name]__[local]___[hash:base64:5]'
-                    }
-                }, {
-                    loader: 'sass-loader',
-                    options: {
-                        data: '$base-rem-size: 0.625; @import "paragon-reset";',
-                        includePaths: [
-                            path.join(__dirname, './node_modules/@edx/paragon/src/utils'),
-                            path.join(__dirname, './node_modules/')
-                        ],
-                        sourceMap: true
-                    }
-                }]
-            }
-        ]
-    }
+    ]
 });
