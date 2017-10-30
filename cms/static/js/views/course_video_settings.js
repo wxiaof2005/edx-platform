@@ -680,7 +680,7 @@ function($, Backbone, _, gettext, moment, ViewUtils, HtmlUtils, StringUtils, Tra
                     responseTranscriptPreferences = null;
                     self.updateSuccessResponseStatus(
                         responseTranscriptPreferences,
-                        gettext('Automatic transcripts disabled')
+                        gettext('Automated transcripts are disabled.')
                     );
                 }).fail(function(jqXHR) {
                     if (jqXHR.responseText) {
@@ -733,7 +733,7 @@ function($, Backbone, _, gettext, moment, ViewUtils, HtmlUtils, StringUtils, Tra
                     // TODO: check with @sylvia
                     // This error happens when invalid server configuration for JWT authentication and communication
                     // b/w platform and video-pipleine.
-                    errorMessage = gettext('Server encoutered error.');
+                    errorMessage = gettext('An error has occurred. Wait a few minutes, and then try again.');
                 }
                 self.updateFailResponseStatus(errorMessage);
             });

@@ -1,6 +1,6 @@
 <button class='button-link action-cancel' aria-describedby='cancel-button-text'>
-    <%- gettext('Cancel') %>
-    <span id='updcancel-button-text' class='sr'><%-gettext('Press cancel to discard changes.') %></span>
+    <%- gettext('Reset') %>
+    <span id='updcancel-button-text' class='sr'><%-gettext('Click Reset to discard changes.') %></span>
 </button>
 <button class="button action-update-course-video-settings" aria-describedby='update-button-text'>
     <%- gettext('Update Settings') %>
