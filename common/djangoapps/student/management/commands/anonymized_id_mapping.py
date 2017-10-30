@@ -23,20 +23,17 @@ class Command(BaseCommand):
     # TODO: revisit now that rake has been deprecated
     # It appears that with the way Rake invokes these commands, we can't
     # have more than one arg passed through...annoying.
-    args = ("course_id", )
-
     help = """Export a CSV mapping usernames to anonymized ids
 
     Exports a CSV document mapping each username in the specified course to
     the anonymized, unique user ID.
     """
 
-    def handle(self, *args, **options):
-        if len(args) != 1:
-            raise CommandError("Usage: unique_id_mapping %s" %
-                               " ".join(("<%s>" % arg for arg in Command.args)))
+    def add_arguments(self, parser):
+        parser.add_argument('course_id')
 
-        course_key = CourseKey.from_string(args[0])
+    def handle(self, *args, **options):
+        course_key = CourseKey.from_string(options['course_id'])
 
         # Generate the output filename from the course ID.
         # Change slashes to dashes first, and then append .csv extension.
