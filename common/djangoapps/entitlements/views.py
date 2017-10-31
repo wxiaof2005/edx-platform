@@ -27,26 +27,6 @@ class EntitlementViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filter_class = CourseEntitlementFilter
 
-    def _get_entitlement_by_uuid(self, entitlement_uuid):
-        if entitlement_uuid is None:
-            return Response(
-                data='Insufficient data to perform request',
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        try:
-            entitlement = CourseEntitlement.objects.get(uuid=uuid.UUID(entitlement_uuid))
-        except CourseEntitlement.DoesNotExist:
-            return Response(
-                data='Entitlement of uuid {} does not exist'.format(entitlement_uuid),
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        except ValueError:
-            return Response(
-                data='Invalid course UUID provided',
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        return entitlement
-
     def perform_destroy(self, instance):
         """
         Expire and revoke the provided Entitlements UUID and unenroll the User if enrolled

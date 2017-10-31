@@ -29,21 +29,3 @@ class CourseEntitlement(TimeStampedModel):
     # if NULL the entitlement is not in use
     enrollment_course_run = models.ForeignKey('student.CourseEnrollment', null=True)
     order_number = models.CharField(max_length=128, null=True)
-
-    def to_json(self):
-        run_key = None
-
-        if self.enrollment_course_run is not None:
-            run_key = self.enrollment_course_run.course_id
-
-        return {
-            'username': self.user.username,
-            'uuid': str(self.uuid),
-            'created': str(self.created),
-            'modified': str(self.modified),
-            'course_uuid': str(self.course_uuid),
-            'expired_at': str(self.expired_at),
-            'mode': self.mode,
-            'enrollment_course_run_key': run_key,
-            'order_number': self.order_number,
-        }
