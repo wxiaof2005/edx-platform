@@ -7,12 +7,51 @@ from rest_framework import permissions, status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import viewsets, generics
 
 from student.models import CourseEnrollment
 from .models import CourseEntitlement
+from .serializers import CourseEntitlementSerializer
 
 SESSION_CLASSES = (JwtAuthentication, SessionAuthentication)
 PERMISSION_CLASSES = (permissions.IsAuthenticated, permissions.IsAdminUser)
+
+
+class EntitlementViewSet(viewsets.ModelViewSet):
+    def _get_clear_entitlements_params_filter_data(self, request):
+        """
+        Get all the parameter Keys and values and clear out any that are None/not available
+
+        Arguments:
+            request: Request Object
+        Returns:
+            Dict: Dictionary containing all the Parameters that are not None
+        """
+        user = None
+        try:
+            if request.query_params.get('username', None) is not None:
+                user = User.objects.get(username=request.query_params.get('username'))
+        except User.DoesNotExist:
+            user = None
+
+        request_data = {
+            'uuid': request.query_params.get('uuid', None),
+            'mode': request.query_params.get('mode', None),
+            'user': user,
+            'order_number': request.query_params.get('order_number', None),
+        }
+        return dict((k, v) for k, v in request_data.iteritems() if v)
+
+    authentication_classes = SESSION_CLASSES
+    permission_classes = PERMISSION_CLASSES
+
+    serializer_class = CourseEntitlementSerializer
+
+    def get_queryset(self):
+        params = self._get_clear_entitlements_params_filter_data(self.request)
+        if len(params) == 0:
+            return CourseEntitlement.objects.all()
+        return CourseEntitlement.objects.filter(**params).all()
 
 
 def _get_updated_entitlement_data_fields(request):
@@ -46,117 +85,6 @@ def _get_response_object(course_entitlements):
     for entitlement in course_entitlements:
         results_list.append(entitlement.to_json())
     return {'results': results_list}
-
-
-class EntitlementView(APIView):
-    authentication_classes = SESSION_CLASSES
-    permission_classes = PERMISSION_CLASSES
-
-    def _get_clear_entitlements_params_filter_data(self, request):
-        """
-        Get all the parameter Keys and values and clear out any that are None/not available
-
-        Arguments:
-            request: Request Object
-        Returns:
-            Dict: Dictionary containing all the Parameters that are not None
-        """
-        request_data = {
-            'uuid': request.query_params.get('uuid', None),
-            'mode': request.query_params.get('mode', None),
-            'username': request.query_params.get('username', None),
-            'order_number': request.query_params.get('order_number', None),
-        }
-        return dict((k, v) for k, v in request_data.iteritems() if v)
-
-    def get(self, request):
-        """
-        Get the entitlement or entitlement based on the provided query filters of all if not filtered
-
-        TODO: Add pagination for large get requests, until then limit to 100
-        """
-        if len(request.query_params) > 0:
-            course_entitlements = CourseEntitlement.objects.filter(
-                **self._get_clear_entitlements_params_filter_data(request)
-            ).all().all()
-        else:
-            course_entitlements = list(CourseEntitlement.objects.all()[0:100])
-
-        return Response(
-            status=status.HTTP_200_OK,
-            data=_get_response_object(course_entitlements)
-        )
-
-    def post(self, request):
-        """
-        Handler for POST requests to the entitlement API to add a new Entitlement
-
-        Expected Data model
-            {
-                "username": <username>,
-                "course_uuid": <course_uuid>,
-                "mode": <mode>, # e.g. verified, credit, audit
-                "order_number": <order_number>
-            }
-        Arguments:
-            request: The request object
-
-        Returns:
-            Response: The Response object with an appropriate Status code and data
-        """
-        course_uuid = request.data.get('course_uuid', None)
-        mode = request.data.get('mode', None)
-        username = request.data.get('username', None)
-        order_number = request.data.get('order_number', None)
-
-        # Verify the required input
-        if (course_uuid is None or
-                mode is None or
-                username is None or
-                order_number is None):
-
-            return Response(data='Insufficient data to create or update entitlement',
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            course_uuid = uuid.UUID(course_uuid)
-        except ValueError:
-            return Response(
-                data='Invalid course UUID provided',
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            user = User.objects.get(username=username)
-        except User.DoesNotExist:
-            return Response(data='Invalid Username provided', status=status.HTTP_401_UNAUTHORIZED)
-
-        entitlement_data = {
-            'user': user,
-            'course_uuid': course_uuid,
-            'mode': mode,
-            'order_number': order_number
-        }
-
-        stored_entitlement, is_created = CourseEntitlement.objects.get_or_create(
-            user=user,
-            course_uuid=course_uuid,
-            order_number=order_number,
-            mode=mode,
-            defaults=entitlement_data
-        )
-
-        if is_created:
-            return Response(
-                status=status.HTTP_201_CREATED,
-                data=_get_response_object([stored_entitlement])
-            )
-        else:
-            return Response(
-                status=status.HTTP_200_OK,
-                data=_get_response_object([stored_entitlement])
-            )
-
 
 class EntitlementUUIDView(APIView):
     authentication_classes = SESSION_CLASSES

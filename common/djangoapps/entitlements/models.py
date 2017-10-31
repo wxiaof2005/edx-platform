@@ -22,7 +22,7 @@ class CourseEntitlement(TimeStampedModel):
     expired_at = models.DateTimeField(null=True)
 
     # The mode of the Course that will be applied
-    mode = models.CharField(default=CourseMode.DEFAULT_MODE_SLUG, max_length=100)
+    mode = models.CharField(max_length=100)
 
     # The ID of the course enrollment for this Entitlement
     # if NULL the entitlement is not in use

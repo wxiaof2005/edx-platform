@@ -25,7 +25,8 @@ class EntitlementsTest(ModuleStoreTestCase):
         super(EntitlementsTest, self).setUp()
         self.user = UserFactory(is_staff=True)
         self.course = CourseFactory.create(org='TestX', course='TS101', run='T1')
-        self.entitlements_url = reverse('entitlements_api:entitlement_api_view')
+        # self.entitlements_url = '/api/entitlements/v1/entitlements/'
+        self.entitlements_url = reverse('entitlements_api:api:entitlements_list-list')
         self.entitlements_uuid_path = 'entitlements_api:entitlement_api_uuid'
         self.course_uuid = str(uuid.uuid4())
 
@@ -48,7 +49,7 @@ class EntitlementsTest(ModuleStoreTestCase):
         Get a basic data set for an entitlement
         """
         return {
-            "username": user.username,
+            "user": user.username,
             "mode": "verified",
             "course_uuid": self.course_uuid,
             "order_number": "EDX-1001"
@@ -83,6 +84,7 @@ class EntitlementsTest(ModuleStoreTestCase):
 
         entitlement_data_missing_parts = self._get_data_set(self.user)
         entitlement_data_missing_parts.pop('mode')
+        entitlement_data_missing_parts.pop('course_uuid')
 
         response = self.client.post(
             self.entitlements_url,
@@ -103,8 +105,8 @@ class EntitlementsTest(ModuleStoreTestCase):
             **headers
         )
         self.assertEqual(response.status_code, 201)
-        results = response.data.get('results', [])
-        self.assertGreater(len(results), 0)
+        results = response.data
+        self.assertIsNotNone(results)
 
         course_entitlement = CourseEntitlement.objects.get(
             user=self.user,
@@ -112,7 +114,7 @@ class EntitlementsTest(ModuleStoreTestCase):
         )
 
         self.assertIsNotNone(course_entitlement)
-        self.assertEqual(results[0]['uuid'], str(course_entitlement.uuid))
+        self.assertEqual(results['uuid'], str(course_entitlement.uuid))
         self.assertEqual(str(course_entitlement.course_uuid), self.course_uuid)
         self.assertEqual(course_entitlement.enrollment_course_run, None)
         self.assertEqual(course_entitlement.mode, 'verified')
