@@ -70,18 +70,6 @@ $seq-nav-height: 44px;
   display: flex;
   justify-content: center;
 
-  .sequence-nav-button {
-    max-width: 200px;
-
-    &.button-previous {
-      order: -999;
-    }
-
-    &.button-next {
-      order: 999;
-    }
-  }
-
   @media print {
     display: none;
   }
@@ -92,13 +80,8 @@ $seq-nav-height: 44px;
     position: relative;
     height: 100%;
     flex-grow: 1;
-
-    // Hide the sequence list for mobile sizes
-    display: none;
-
-    @include media-breakpoint-up(md) {
-      display: block;
-    }
+    white-space: nowrap;
+    overflow: hidden;
   }
 
   ol {
@@ -225,38 +208,60 @@ $seq-nav-height: 44px;
 
   display: block;
   top: 0;
+  min-width: 40px;
+  max-width: 40px;
   height: 100%;
   text-shadow: none; // overrides default button text-shadow
   background: none;  // overrides default button gradient
-  background-color: white;
+  background-color: theme-color("inverse");
   border-color: $seq-nav-border-color;
   box-shadow: none;
-  min-width: 120px;
   font-size: inherit;
   font-weight: normal;
   padding: 0 $baseline;
-  text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
 
-  span:not(:last-child) {
-    @include padding-right($baseline / 2);
+  @include media-breakpoint-up(md) {
+    min-width: 120px;
+    max-width: 200px;
+    text-overflow: ellipsis;
+
+    span:not(:last-child) {
+      @include padding-right($baseline / 2);
+    }
+  }
+
+  .sequence-nav-button-label {
+    display: none;
+
+    @include media-breakpoint-up(md) {
+      display: inline;
+    }
   }
 
   &.button-previous {
-    @include left(0);
-    @include border-top-left-radius(3px);
-    @include border-top-right-radius(0);
-    @include border-bottom-right-radius(0);
-    @include border-bottom-left-radius(3px);
+    order: -999;
+
+    @include media-breakpoint-up(md) {
+      @include left(0);
+      @include border-top-left-radius(3px);
+      @include border-top-right-radius(0);
+      @include border-bottom-right-radius(0);
+      @include border-bottom-left-radius(3px);
+    }
   }
 
   &.button-next {
-    @include right(0);
-    @include border-top-left-radius(0);
-    @include border-top-right-radius(3px);
-    @include border-bottom-right-radius(3px);
-    @include border-bottom-left-radius(0);
+    order: 999;
+
+    @include media-breakpoint-up(md) {
+      @include right(0);
+      @include border-top-left-radius(0);
+      @include border-top-right-radius(3px);
+      @include border-bottom-right-radius(3px);
+      @include border-bottom-left-radius(0);
+    }
   }
 
   &.disabled {
