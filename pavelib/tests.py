@@ -49,6 +49,9 @@ __test__ = False  # do not collect
     make_option("--verbose", action="store_const", const=2, dest="verbosity"),
     make_option("-q", "--quiet", action="store_const", const=0, dest="verbosity"),
     make_option("-v", "--verbosity", action="count", dest="verbosity", default=1),
+    make_option("--disable_capture", action="store_true", dest="disable_capture",
+        help="Disable capturing of stdout/stderr"
+    ),
     make_option(
         '--disable-migrations',
         action='store_true',
