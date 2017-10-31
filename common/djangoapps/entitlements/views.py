@@ -1,15 +1,15 @@
 import uuid
 from datetime import datetime
 
-from django.contrib.auth.models import User
+from django_filters.rest_framework import DjangoFilterBackend
 from edx_rest_framework_extensions.authentication import JwtAuthentication
 from rest_framework import permissions, status
+from rest_framework import viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework import viewsets, generics
 
 from student.models import CourseEnrollment
+from .filters import CourseEntitlementFilter
 from .models import CourseEntitlement
 from .serializers import CourseEntitlementSerializer
 
@@ -18,77 +18,14 @@ PERMISSION_CLASSES = (permissions.IsAuthenticated, permissions.IsAdminUser)
 
 
 class EntitlementViewSet(viewsets.ModelViewSet):
-    def _get_clear_entitlements_params_filter_data(self, request):
-        """
-        Get all the parameter Keys and values and clear out any that are None/not available
-
-        Arguments:
-            request: Request Object
-        Returns:
-            Dict: Dictionary containing all the Parameters that are not None
-        """
-        user = None
-        try:
-            if request.query_params.get('username', None) is not None:
-                user = User.objects.get(username=request.query_params.get('username'))
-        except User.DoesNotExist:
-            user = None
-
-        request_data = {
-            'uuid': request.query_params.get('uuid', None),
-            'mode': request.query_params.get('mode', None),
-            'user': user,
-            'order_number': request.query_params.get('order_number', None),
-        }
-        return dict((k, v) for k, v in request_data.iteritems() if v)
-
     authentication_classes = SESSION_CLASSES
     permission_classes = PERMISSION_CLASSES
-
+    queryset = CourseEntitlement.objects.all()
+    lookup_value_regex = '[0-9a-f-]+'
+    lookup_field = 'uuid'
     serializer_class = CourseEntitlementSerializer
-
-    def get_queryset(self):
-        params = self._get_clear_entitlements_params_filter_data(self.request)
-        if len(params) == 0:
-            return CourseEntitlement.objects.all()
-        return CourseEntitlement.objects.filter(**params).all()
-
-
-def _get_updated_entitlement_data_fields(request):
-    """
-    Get the updated entitlement data fields from the request
-
-    Arguments:
-        request: Request object
-    Returns:
-        Dict: A dictionary containing only the updated data fields
-    """
-    request_data = {
-        'course_uuid': request.data.get('course_uuid', None),
-        'mode': request.data.get('mode', None),
-        'username': request.data.get('username', None),
-        'order_number': request.data.get('order_number', None),
-    }
-    return dict((k, v) for k, v in request_data.iteritems() if v)
-
-
-def _get_response_object(course_entitlements):
-    """
-    Build the response dictionary for the Response
-
-    Arguments:
-        course_entitlements (list): A list containing 1 or more CourseEntitlements
-    Returns:
-        Dict: A dictionary containing the results list
-    """
-    results_list = []
-    for entitlement in course_entitlements:
-        results_list.append(entitlement.to_json())
-    return {'results': results_list}
-
-class EntitlementUUIDView(APIView):
-    authentication_classes = SESSION_CLASSES
-    permission_classes = PERMISSION_CLASSES
+    filter_backends = (DjangoFilterBackend,)
+    filter_class = CourseEntitlementFilter
 
     def _get_entitlement_by_uuid(self, entitlement_uuid):
         if entitlement_uuid is None:
@@ -110,61 +47,20 @@ class EntitlementUUIDView(APIView):
             )
         return entitlement
 
-    def get(self, request, entitlement_uuid):
-        entitlement = self._get_entitlement_by_uuid(entitlement_uuid)
-        return Response(_get_response_object([entitlement]))
-
-    def delete(self, request, entitlement_uuid):
+    def perform_destroy(self, instance):
         """
         Expire and revoke the provided Entitlements UUID and unenroll the User if enrolled
         """
-        entitlement = self._get_entitlement_by_uuid(entitlement_uuid)
-
-        if entitlement.expired_at is None:
-            entitlement.expired_at = datetime.now()
-            entitlement.save()
+        if instance.expired_at is None:
+            instance.expired_at = datetime.now()
+            instance.save()
 
         # if the entitlement is enrolled we need to unenroll the user
-        if entitlement.enrollment_course_run is not None:
+        if instance.enrollment_course_run is not None:
             CourseEnrollment.unenroll(
-                user=entitlement.user,
-                course_id=entitlement.enrollment_course_run.course_id,
+                user=instance.user,
+                course_id=instance.enrollment_course_run.course_id,
                 skip_refund=True
             )
-            entitlement.enrollment_course_run = None
-            entitlement.save()
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def patch(self, request, entitlement_uuid):
-        """
-        Patch the Entitlement with the provided data and return the update Entitlement information
-
-        Expected incoming data for an Entitlement
-            {
-                "username": <username>,
-                "course_uuid": <course_uuid>,
-                "mode": <mode>, # e.g. verified, credit, audit
-                "order_number": <order_number>
-            }
-        """
-        if entitlement_uuid is None:
-            return Response(
-                data='Insufficient data to perform request',
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        entitlement_data = _get_updated_entitlement_data_fields(request=request)
-
-        try:
-            entitlement_uuid = uuid.UUID(entitlement_uuid)
-            CourseEntitlement.objects.filter(uuid=entitlement_uuid).update(**entitlement_data)
-            entitlement = CourseEntitlement.objects.get(uuid=entitlement_uuid)
-            return Response(
-                status=status.HTTP_200_OK,
-                data=_get_response_object([entitlement])
-            )
-        except ValueError:
-            return Response(
-                data='Invalid course UUID provided',
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            instance.enrollment_course_run = None
+            instance.save()
