@@ -136,6 +136,10 @@ def test_system(options, passthrough_options):
     make_option("--verbose", action="store_const", const=2, dest="verbosity"),
     make_option("-q", "--quiet", action="store_const", const=0, dest="verbosity"),
     make_option("-v", "--verbosity", action="count", dest="verbosity", default=1),
+    make_option(
+        "--disable_capture", action="store_true", dest="disable_capture",
+        help="Disable capturing of stdout/stderr"
+    ),
 ], share_with=['pavelib.utils.test.utils.clean_reports_dir'])
 @PassthroughTask
 @timed
