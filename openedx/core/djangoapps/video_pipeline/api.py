@@ -21,15 +21,16 @@ def update_3rd_party_transcription_service_credentials(**credentials_payload):
         credentials_payload(dict): A payload containing org, provider and its credentials.
 
     Returns:
-        A Boolean specifying whether the credentials were updated or not.
+        A Boolean specifying whether the credentials were updated or not
+        and an error response received from pipeline.
     """
-    is_updated, error_message = False, ''
+    error_response, is_updated = {}, False
     pipeline_integration = VideoPipelineIntegration.current()
     if pipeline_integration.enabled:
         try:
             video_pipeline_user = pipeline_integration.get_service_user()
         except ObjectDoesNotExist:
-            return error_message, is_updated
+            return error_response, is_updated
 
         client = create_video_pipeline_api_client(user=video_pipeline_user, api_url=pipeline_integration.api_url)
 
@@ -45,6 +46,6 @@ def update_3rd_party_transcription_service_credentials(**credentials_payload):
                 credentials_payload.get('provider'),
                 ex.content,
             )
-            error_message = json.loads(ex.content)['message']
+            error_response = json.loads(ex.content)
 
-    return error_message, is_updated
+    return error_response, is_updated

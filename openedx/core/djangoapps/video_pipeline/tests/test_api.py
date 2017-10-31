@@ -2,6 +2,7 @@
 Tests for Video Pipeline api utils.
 """
 import ddt
+import json
 from mock import Mock, patch
 
 from django.test.testcases import TestCase
@@ -59,11 +60,11 @@ class TestAPIUtils(VideoPipelineIntegrationMixin, TestCase):
         # Mock the post request
         mock_credentials_endpoint = mock_client.return_value.transcript_credentials
         # Try updating the transcription service credentials
-        error_message, is_updated = update_3rd_party_transcription_service_credentials(**credentials_payload)
+        error_response, is_updated = update_3rd_party_transcription_service_credentials(**credentials_payload)
 
         mock_credentials_endpoint.post.assert_called_with(credentials_payload)
         # Making sure log.exception is not called.
-        self.assertEqual(error_message, '')
+        self.assertDictEqual(error_response, {})
         self.assertFalse(mock_logger.exception.called)
         self.assertTrue(is_updated)
 
@@ -74,7 +75,7 @@ class TestAPIUtils(VideoPipelineIntegrationMixin, TestCase):
         Tests that the update transcription service credentials logs the exception occurring
         during communication with edx-video-pipeline.
         """
-        error_content = '{"message": "invalid creds"}'
+        error_content = '{"error_type": "1"}'
         # Mock the post request
         mock_credentials_endpoint = mock_client.return_value.transcript_credentials
         mock_credentials_endpoint.post = Mock(side_effect=HttpClientError(content=error_content))
@@ -84,12 +85,12 @@ class TestAPIUtils(VideoPipelineIntegrationMixin, TestCase):
             'provider': 'ABC Provider',
             'api_key': '61c56a8d0'
         }
-        error_message, is_updated = update_3rd_party_transcription_service_credentials(**credentials_payload)
+        error_response, is_updated = update_3rd_party_transcription_service_credentials(**credentials_payload)
 
         mock_credentials_endpoint.post.assert_called_with(credentials_payload)
         # Assert the results.
         self.assertFalse(is_updated)
-        self.assertEqual(error_message, "invalid creds")
+        self.assertDictEqual(error_response, json.loads(error_content))
         mock_logger.exception.assert_called_with(
             '[video-pipeline-service] Unable to update transcript credentials -- org=%s -- provider=%s -- response=%s.',
             credentials_payload['org'],

@@ -54,11 +54,12 @@ class TranscriptCredentialsTest(CourseTestCase):
     @ddt.data(
         (
             {
-                'provider': 'invalid_provider',
+                'provider': 'abc_provider',
                 'api_key': '1234'
             },
-            None,
-            400
+            ({}, None),
+            400,
+            '{\n  "error": "Invalid Provider abc_provider."\n}'
         ),
         (
             {
@@ -66,8 +67,9 @@ class TranscriptCredentialsTest(CourseTestCase):
                 'api_key': '11111',
                 'api_secret_key': '44444'
             },
-            False,
-            400
+            ({'error_type': 1}, False),
+            400,
+            '{\n  "error": "Transcript credentials are not valid."\n}'
         ),
         (
             {
@@ -75,18 +77,19 @@ class TranscriptCredentialsTest(CourseTestCase):
                 'api_key': '12345',
                 'username': 'test_user'
             },
-            True,
-            200
+            ({}, True),
+            200,
+            ''
         )
     )
     @ddt.unpack
     @patch('contentstore.views.transcript_settings.update_3rd_party_transcription_service_credentials')
-    def test_transcript_credentials_handler(self, request_payload, is_updated,
-                                            expected_status_code, mock_update_credentials):
+    def test_transcript_credentials_handler(self, request_payload, update_credentials_response, expected_status_code,
+                                            expected_response, mock_update_credentials):
         """
         Tests that transcript credentials handler works as expected.
         """
-        mock_update_credentials.return_value = ('', is_updated)
+        mock_update_credentials.return_value = update_credentials_response
         transcript_settings_url = self.get_url_for_course_key(self.course.id)
         response = self.client.post(
             transcript_settings_url,
@@ -94,6 +97,7 @@ class TranscriptCredentialsTest(CourseTestCase):
             content_type='application/json'
         )
         self.assertEqual(response.status_code, expected_status_code)
+        self.assertEqual(response.content, expected_response)
 
 
 @ddt.ddt

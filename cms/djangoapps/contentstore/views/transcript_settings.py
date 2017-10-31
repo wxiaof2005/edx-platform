@@ -3,6 +3,7 @@ Views related to the transcript preferences feature
 """
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseNotFound
+from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from edxval.api import (
     get_3rd_party_transcription_plans,
@@ -17,6 +18,13 @@ from util.json_request import JsonResponse, expect_json
 from contentstore.views.videos import TranscriptProvider
 
 __all__ = ['transcript_credentials_handler']
+
+
+class TranscriptionProviderErrorType:
+    """
+    Transcription provider's error types enumeration.
+    """
+    INVALID_CREDENTIALS = 1
 
 
 def validate_transcript_credentials(provider, **credentials):
@@ -82,13 +90,21 @@ def transcript_credentials_handler(request, course_key_string):
     else:
         # Send the validated credentials to edx-video-pipeline.
         credentials_payload = dict(validated_credentials, org=course_key.org, provider=provider)
-        error_message, is_updated = update_3rd_party_transcription_service_credentials(**credentials_payload)
+        error_response, is_updated = update_3rd_party_transcription_service_credentials(**credentials_payload)
         # Send appropriate response based on whether credentials were updated or not.
         if is_updated:
             # Cache credentials state in edx-val.
             update_transcript_credentials_state_for_org(org=course_key.org, provider=provider, exists=is_updated)
             response = JsonResponse(status=200)
         else:
+            # Error response would contain error types and the following
+            # error type is received from edx-video-pipeline whenever we've
+            # got invalid credentials for a provider. Its kept this way because
+            # edx-video-pipeline doesn't support i18n translations yet.
+            error_type = error_response.get('error_type')
+            if error_type == TranscriptionProviderErrorType.INVALID_CREDENTIALS:
+                error_message = _('Transcript credentials are not valid.')
+
             response = JsonResponse({'error': error_message}, status=400)
 
     return response
