@@ -6,7 +6,7 @@ from django.test.testcases import TestCase
 
 from contentstore.tests.utils import CourseTestCase
 from contentstore.utils import reverse_course_url
-from contentstore.views.transcript_settings import validate_transcript_credentials
+from contentstore.views.transcript_settings import TranscriptionProviderErrorType, validate_transcript_credentials
 
 
 @ddt.ddt
@@ -67,7 +67,7 @@ class TranscriptCredentialsTest(CourseTestCase):
                 'api_key': '11111',
                 'api_secret_key': '44444'
             },
-            ({'error_type': 1}, False),
+            ({'error_type': TranscriptionProviderErrorType.INVALID_CREDENTIALS}, False),
             400,
             '{\n  "error": "Transcript credentials are not valid."\n}'
         ),
