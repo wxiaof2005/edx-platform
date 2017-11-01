@@ -387,8 +387,8 @@ define(
                     transcriptionPlans[selectedProvider].turnaround.default
                 );
 
-                // Now click and cancel and verify active preferences are shown.
-                $courseVideoSettingsEl.find('.action-cancel').click();
+                // Now click cancel button and verify active preferences are shown.
+                $courseVideoSettingsEl.find('.action-cancel-course-video-settings').click();
                 verifyTranscriptPreferences();
                 expect(courseVideoSettingsView.selectedProvider, providers.Cielo24);
             });
@@ -544,7 +544,7 @@ define(
                 verifyProviderList(providers.none);
 
                 // Verify that success message is shown.
-                verifyMessage('success', 'Automatic transcripts disabled');
+                verifyMessage('success', 'Automatic transcripts are disabled.');
             });
 
             it('shows error message if server sends error', function() {

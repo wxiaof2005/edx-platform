@@ -36,7 +36,7 @@ function($, Backbone, _, gettext, moment, ViewUtils, HtmlUtils, StringUtils, Tra
             'click .action-change-provider': 'renderOrganizationCredentials',
             'click .action-update-org-credentials': 'updateOrganizationCredentials',
             'click .action-update-course-video-settings': 'updateCourseVideoSettings',
-            'click .action-cancel': 'discardChanges',
+            'click .action-cancel-course-video-settings': 'discardChanges',
             'click .action-close-course-video-settings': 'closeCourseVideoSettings'
         },
 
@@ -680,7 +680,7 @@ function($, Backbone, _, gettext, moment, ViewUtils, HtmlUtils, StringUtils, Tra
                     responseTranscriptPreferences = null;
                     self.updateSuccessResponseStatus(
                         responseTranscriptPreferences,
-                        gettext('Automated transcripts are disabled.')
+                        gettext('Automatic transcripts are disabled.')
                     );
                 }).fail(function(jqXHR) {
                     if (jqXHR.responseText) {
@@ -726,13 +726,10 @@ function($, Backbone, _, gettext, moment, ViewUtils, HtmlUtils, StringUtils, Tra
                 );
             }).fail(function(jqXHR) {
                 var errorMessage;
-                // Only set error message in case 400 status.
+                // Only set error message in case of 400 status.
                 if (jqXHR.responseText && jqXHR.status === 400) {
                     errorMessage = jqXHR.responseText;
                 } else {
-                    // TODO: check with @sylvia
-                    // This error happens when invalid server configuration for JWT authentication and communication
-                    // b/w platform and video-pipleine.
                     errorMessage = gettext('An error has occurred. Wait a few minutes, and then try again.');
                 }
                 self.updateFailResponseStatus(errorMessage);
