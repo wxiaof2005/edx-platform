@@ -4,14 +4,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-function Success({ homepageUrl, dashboardUrl, isLoggedIn }) {
+function Success({ platformName, homepageUrl, dashboardUrl, isLoggedIn }) {
   let btnText,
     btnUrl;
   if (isLoggedIn) {
     btnText = gettext('Go to my Dashboard');
     btnUrl = dashboardUrl;
   } else {
-    btnText = gettext('Go to edX Home');
+    btnText = gettext(`Go to ${platformName} Home`);
     btnUrl = homepageUrl;
   }
   return (<div className="contact-us-wrapper">
@@ -40,6 +40,7 @@ function Success({ homepageUrl, dashboardUrl, isLoggedIn }) {
 }
 
 Success.propTypes = {
+  platformName: PropTypes.string.isRequired,
   dashboardUrl: PropTypes.string.isRequired,
   homepageUrl: PropTypes.string.isRequired,
   isLoggedIn: PropTypes.bool.isRequired,

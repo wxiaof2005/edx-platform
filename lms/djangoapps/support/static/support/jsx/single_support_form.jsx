@@ -122,9 +122,10 @@ class RenderForm extends React.Component {
   renderSuccess() {
     return (
       <Success
+        platformName={this.props.context.platformName}
         homepageUrl={this.props.context.homepageUrl}
         dashboardUrl={this.props.context.dashboardUrl}
-        isLoggedIn={this.props.context.user && true}
+        isLoggedIn={this.props.context.user === undefined}
       />
     );
   }
@@ -134,7 +135,10 @@ class RenderForm extends React.Component {
     if (this.props.context.user) {
       userElement = <LoggedInUser userInformation={this.props.context.user} />;
     } else {
-      userElement = <LoggedOutUser loginUrl={this.props.context.loginQuery} />;
+      userElement = (<LoggedOutUser
+        platformName={this.props.context.platformName}
+        loginUrl={this.props.context.loginQuery}
+      />);
     }
 
     return (
@@ -161,7 +165,7 @@ class RenderForm extends React.Component {
             <a
               href={this.props.context.marketingUrl}
               className="btn btn-secondary help-button"
-            >{gettext('Search the edX Help Center')}</a>
+            >{`Search the ${this.props.context.platformName} Help Center`}</a>
           </div>
         </div>
 
