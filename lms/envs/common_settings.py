@@ -44,6 +44,7 @@ from openedx.core.djangoapps.theming.helpers_dirs import (
     get_theme_base_dirs_from_settings
 )
 from openedx.core.lib.derived import derived, derived_dict_entry
+from common.djangoapps.microsite_configuration import microsite
 from xmodule.modulestore.modulestore_settings import update_module_store_settings
 from xmodule.modulestore.edit_info import EditInfoMixin
 from lms.djangoapps.lms_xblock.mixin import LmsBlockMixin
@@ -554,8 +555,7 @@ def _make_main_mako_templates(settings):
         for theme in get_themes_unchecked(themes_dirs, PROJECT_ROOT):
             if theme.themes_base_dir not in settings.MAIN_MAKO_TEMPLATES_BASE:
                 settings.MAIN_MAKO_TEMPLATES_BASE.insert(0, theme.themes_base_dir)
-    if settings.FEATURES.get('USE_MICROSITES', False) and getattr(settings, "MICROSITE_CONFIGURATION", False):
-        settings.MAIN_MAKO_TEMPLATES_BASE.insert(0, settings.MICROSITE_ROOT_DIR)
+    microsite.add_microsite_dirs_to_main_mako_templates(settings)
     return settings.MAIN_MAKO_TEMPLATES_BASE
 MAKO_TEMPLATES['main'] = _make_main_mako_templates
 derived_dict_entry('MAKO_TEMPLATES', 'main')
@@ -619,17 +619,9 @@ TEMPLATES = [
     }
 ]
 DEFAULT_TEMPLATE_ENGINE = TEMPLATES[0]
+
 DEFAULT_TEMPLATE_ENGINE_DIRS = DEFAULT_TEMPLATE_ENGINE['DIRS'][:]
-
-
-def _add_microsite_dirs_to_default_template_engine(settings):
-    """
-    Derives the final DEFAULT_TEMPLATE_ENGINE['DIRS'] setting from other settings.
-    """
-    if settings.FEATURES.get('USE_MICROSITES', False) and getattr(settings, "MICROSITE_CONFIGURATION", False):
-        DEFAULT_TEMPLATE_ENGINE_DIRS.append(settings.MICROSITE_ROOT_DIR)
-    return DEFAULT_TEMPLATE_ENGINE_DIRS
-DEFAULT_TEMPLATE_ENGINE['DIRS'] = _add_microsite_dirs_to_default_template_engine
+DEFAULT_TEMPLATE_ENGINE['DIRS'] = microsite.add_microsite_dirs_to_default_template_engine
 derived_dict_entry('DEFAULT_TEMPLATE_ENGINE', 'DIRS')
 
 ###############################################################################################

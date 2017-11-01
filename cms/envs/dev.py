@@ -5,7 +5,7 @@ This config file runs the simplest dev environment"""
 # want to import all variables from base settings files
 # pylint: disable=wildcard-import, unused-wildcard-import
 
-from .common import *
+from .common_settings import *
 from openedx.core.lib.derived import derive_settings
 from openedx.core.lib.logsettings import get_logger_config
 

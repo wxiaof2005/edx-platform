@@ -16,7 +16,7 @@ import threading
 
 from django.conf import settings
 
-from util.url import strip_port_from_host
+from common.djangoapps.util.url import strip_port_from_host
 
 
 # pylint: disable=unused-argument

@@ -11,7 +11,7 @@ from importlib import import_module
 
 from django.conf import settings
 
-from microsite_configuration.backends.base import BaseMicrositeBackend, BaseMicrositeTemplateBackend
+from .backends.base import BaseMicrositeBackend, BaseMicrositeTemplateBackend
 
 __all__ = [
     'is_request_in_microsite', 'get_value', 'has_override_value',
@@ -29,6 +29,24 @@ def is_feature_enabled():
     Returns whether the feature flag to enable microsite has been set
     """
     return settings.FEATURES.get('USE_MICROSITES', False)
+
+
+def add_microsite_dirs_to_default_template_engine(settings):
+    """
+    Derives the final DEFAULT_TEMPLATE_ENGINE['DIRS'] setting from other settings.
+    """
+    if is_feature_enabled() and getattr(settings, "MICROSITE_CONFIGURATION", False):
+        settings.DEFAULT_TEMPLATE_ENGINE_DIRS.append(settings.MICROSITE_ROOT_DIR)
+    return settings.DEFAULT_TEMPLATE_ENGINE_DIRS
+
+
+def add_microsite_dirs_to_main_mako_templates(settings):
+    """
+    Adds the microsite dirs to the MAKO_TEMPLATES['main'] setting, if appropriate.
+    """
+    if is_feature_enabled() and getattr(settings, "MICROSITE_CONFIGURATION", False):
+        settings.MAIN_MAKO_TEMPLATES_BASE.insert(0, settings.MICROSITE_ROOT_DIR)
+    return settings.MAIN_MAKO_TEMPLATES_BASE
 
 
 def is_request_in_microsite():
@@ -106,7 +124,10 @@ def enable_microsites(log):
     """
     Enable the use of microsites during the startup script
     """
+    global BACKEND, TEMPLATES_BACKEND
     if is_feature_enabled():
+        BACKEND = get_backend(settings.MICROSITE_BACKEND, BaseMicrositeBackend)
+        TEMPLATES_BACKEND = get_backend(settings.MICROSITE_TEMPLATE_BACKEND, BaseMicrositeTemplateBackend)
         BACKEND.enable_microsites(log)
 
 
@@ -156,7 +177,3 @@ def get_backend(name, expected_base_class, **kwds):
         raise ValueError('Cannot find microsites backend %s' % module_name)
 
     return cls(**kwds)
-
-
-BACKEND = get_backend(settings.MICROSITE_BACKEND, BaseMicrositeBackend)
-TEMPLATES_BACKEND = get_backend(settings.MICROSITE_TEMPLATE_BACKEND, BaseMicrositeTemplateBackend)

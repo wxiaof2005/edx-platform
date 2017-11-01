@@ -102,6 +102,26 @@ class DatabaseMicrositeBackendTests(DatabaseMicrositeTestCase):
         microsite.clear()
         self.assertIsNone(microsite.get_value('platform_name'))
 
+    def test_enable_microsites_pre_startup(self):
+        """
+        Tests microsite.test_enable_microsites_pre_startup works as expected.
+        """
+        # remove microsite root directory paths first
+        settings.DEFAULT_TEMPLATE_ENGINE_DIRS = [
+            path for path in settings.DEFAULT_TEMPLATE_ENGINE_DIRS
+            if path != settings.MICROSITE_ROOT_DIR
+        ]
+        with patch.dict('django.conf.settings.FEATURES', {'USE_MICROSITES': False}):
+            microsite.add_microsite_dirs_to_default_template_engine(settings)
+            microsite.add_microsite_dirs_to_main_mako_templates(settings)
+            self.assertNotIn(settings.MICROSITE_ROOT_DIR, settings.DEFAULT_TEMPLATE_ENGINE_DIRS)
+        with patch.dict('django.conf.settings.FEATURES', {'USE_MICROSITES': True}):
+            with patch('django.conf.settings.MICROSITE_CONFIGURATION', True):
+                microsite.add_microsite_dirs_to_default_template_engine(settings)
+                microsite.add_microsite_dirs_to_main_mako_templates(settings)
+                self.assertIn(settings.MICROSITE_ROOT_DIR, settings.DEFAULT_TEMPLATE_ENGINE_DIRS)
+                self.assertIn(settings.MICROSITE_ROOT_DIR, settings.MAIN_MAKO_TEMPLATES_BASE)
+
     @patch('edxmako.paths.add_lookup')
     def test_enable_microsites(self, add_lookup):
         """

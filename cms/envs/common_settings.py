@@ -45,9 +45,9 @@ import imp
 import os
 import sys
 from datetime import timedelta
-import lms.envs.common
+import lms.envs.common_settings
 # Although this module itself may not use these imported variables, other dependent modules may.
-from lms.envs.common import (
+from lms.envs.common_settings import (
     USE_TZ, TECH_SUPPORT_EMAIL, PLATFORM_NAME, PLATFORM_DESCRIPTION, BUGS_EMAIL, DOC_STORE_CONFIG, DATA_DIR,
     ALL_LANGUAGES, WIKI_ENABLED, update_module_store_settings, ASSET_IGNORE_REGEX,
     PARENTAL_CONSENT_AGE_LIMIT, REGISTRATION_EMAIL_PATTERNS_ALLOWED,

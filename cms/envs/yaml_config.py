@@ -16,7 +16,7 @@ defined in the environment:
 
 import yaml
 
-from .common import *
+from .common_settings import *
 from openedx.core.lib.derived import derive_settings
 from openedx.core.lib.logsettings import get_logger_config
 from util.config_parse import convert_tokens
@@ -140,11 +140,11 @@ else:
 CELERY_ALWAYS_EAGER = False
 
 ##########################################
-# Merge settings from common.py
+# Merge settings from common_settings.py
 #
 # Before the tokens are imported directly
 # into settings some dictionary settings
-# need to be merged from common.py
+# need to be merged from common_settings.py
 
 ENV_FEATURES = ENV_TOKENS.get('FEATURES', {})
 for feature, value in ENV_FEATURES.items():
